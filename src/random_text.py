@@ -1,11 +1,21 @@
-import english_words
+import english_words    # pip install english-words
 import numpy as np
 
 def get_text(
     size: int=10_000
     ,distribution: dict=None    # Dictionary describing what is the probability any given word is chosen    
     ,words: list=list(english_words.get_english_words_set(['web2', 'gcide'], lower=True))
+    ,power_law_exponent: float=None      # Power law to use in case distribution has not been given
 ):
+    
+    # Generate distribution using power_law if exists one and distribution is None
+    if power_law_exponent is not None and distribution is None:
+        distribution = [1/(i**power_law_exponent) for i in range(1, len(words)+1)]
+        # Update frequencies to match 100% when adding everything up
+        total_vals = sum(distribution)
+        distribution = [i/total_vals for i in distribution]
+        # Some rounding errors may occur, here we mitigate that
+        distribution[-1] = 1-sum(distribution[:-1])
     
     # If there is no distribution, assume equal distribution for every single word
     if distribution is None:
