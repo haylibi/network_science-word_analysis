@@ -135,7 +135,7 @@ class EvaluateNetworks():
         ax.set_xlabel("betweenness Centrality", fontdict={"size": 10})
         ax.set_ylabel("Counts", fontdict={"size": 10})
 
-        return {'Betweeness Centrality': np.mean(list(self._betweeness_centrality))}
+        return {'Betweeness Centrality': np.mean(list(self._betweeness_centrality.values()))}
     
     
     
@@ -231,7 +231,7 @@ class EvaluateNetworks():
 
         # We know the diameter, so create an array
         # to store values from 0 up to (and including) diameter
-        path_lengths = np.zeros(self.diameter + 1, dtype=int)
+        path_lengths = np.zeros(self._diameter + 1, dtype=int)
 
         # Extract the frequency of shortest path lengths between two nodes
         for pls in self.shortest_paths.values():
@@ -245,10 +245,11 @@ class EvaluateNetworks():
             ax = self.figure.add_subplot()
 
         # Plot the frequency distribution (ignoring path lengths of 0) as a percentage
-        ax.bar(np.arange(1, self.diameter + 1), height=freq_percent)
+        ax.bar(np.arange(1, self._diameter + 1), height=freq_percent)
         ax.set_title("Distribution of shortest path length on a random network", fontdict={"size": 10}, loc="center")
         ax.set_xlabel("Shortest Path Length", fontdict={"size": 10})
         ax.set_ylabel("Frequency (%)", fontdict={"size": 10})
+        return {}
 
 
     def degree_centrality(self, force_update=False, ax=None, **kwargs):
