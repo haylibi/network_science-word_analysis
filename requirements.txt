@@ -6,3 +6,5 @@ networkx
 contractions
 english-words
 pandas
+requests
+tqdm
