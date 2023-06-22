@@ -1,4 +1,5 @@
 import math
+import time
 import numpy as np
 import pandas as pd
 import networkx as nx
@@ -86,8 +87,10 @@ class EvaluateNetworks():
         self.network = network
         self.figure = plt.figure(**kwargs)
 
-        # Defining axes
+        # Don't turn figure visible until everything has been plotted
+        self.figure.set_visible(False)
 
+        # Defining axes
         # Number of rows -> evaluations dividided by number of cols (ceiling, because if not disible one more row is needed)
         nrows = math.ceil(len(evaluations)/ncols)
         gs = gridspec.GridSpec(nrows=nrows, ncols=ncols, figure=plt.figure(figsize=(14, 10)))
@@ -114,7 +117,7 @@ class EvaluateNetworks():
 
 
 
-    def betweeness_centrality(self, force_update=False, ax=None, **kwargs):
+    def betweeness_centrality(self, force_update=False, ax=None, prints=False, plots=False, **kwargs):
         # If method has already been called, no need to calculate values again  (unless forceupdate is true)
         if not hasattr(self, '_betweeness_centrality') or force_update:
             # betweenness centrality
@@ -122,24 +125,26 @@ class EvaluateNetworks():
             # betweeness per node
             self.betweeness = (sorted(self._betweeness_centrality.items(), key=lambda item: item[1], reverse=True))
 
-        print("These are the top 10 nodes with highest betweenness centrality:\n" + '\n'.join([f"{node} -> {centrality_value}" for node, centrality_value in self.betweeness[:10]]))
-        print("These are the 10 nodes with lowest betweenness centrality:\n" + '\n'.join([f"{node} -> {centrality_value}" for node, centrality_value in self.betweeness[-10:]]))
+        if prints:
+            print("    These are the top 10 nodes with highest betweenness centrality:\n" + '\n'.join([f"{node} -> {centrality_value}" for node, centrality_value in self.betweeness[:10]]))
+            print("    These are the 10 nodes with lowest betweenness centrality:\n" + '\n'.join([f"{node} -> {centrality_value}" for node, centrality_value in self.betweeness[-10:]]))
         
-        # plot histogram
-        if ax is None:
-            ax = self.figure.add_subplot()
+        if plots:
+            # plot histogram
+            if ax is None:
+                ax = self.figure.add_subplot()
 
-        ax.hist(self._betweeness_centrality .values(), bins=25)
-        # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
-        ax.set_title("betweenness Centrality Histogram ", fontdict={"size": 10}, loc="center")
-        ax.set_xlabel("betweenness Centrality", fontdict={"size": 10})
-        ax.set_ylabel("Counts", fontdict={"size": 10})
+            ax.hist(self._betweeness_centrality .values(), bins=25)
+            # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
+            ax.set_title("betweenness Centrality Histogram ", fontdict={"size": 10}, loc="center")
+            ax.set_xlabel("betweenness Centrality", fontdict={"size": 10})
+            ax.set_ylabel("Counts", fontdict={"size": 10})
 
         return {'Betweeness Centrality': np.mean(list(self._betweeness_centrality.values()))}
     
     
     
-    def degree_distribution(self, force_update=False, axs=None, **kwargs):
+    def degree_distribution(self, force_update=False, axs=None, plots=False, **kwargs):
         if not hasattr(self, 'degree_frequencies') or force_update:
             # avg_degree
             self.avg_degree = np.mean([d for _, d in self.network.degree()])
@@ -162,30 +167,30 @@ class EvaluateNetworks():
 
             self.degree_frequencies = degree_frequencies
 
-        
-        # Plot distributions
-        if axs is None:
-            axs = [self.figure.add_subplot(1, 2, 1), self.figure.add_subplot(1, 2, 2)]
+        if plots:
+            # Plot distributions
+            if axs is None:
+                axs = [self.figure.add_subplot(1, 2, 1), self.figure.add_subplot(1, 2, 2)]
 
-        axs[1].grid(True, which="both", linestyle='--', alpha=0.5)
-        axs[1].tick_params(axis='both', which='major', labelsize=10)
-        axs[1].tick_params(axis='both', which='minor', labelsize=8)
-
-
-        # Normal scale
-        degree_frequencies.plot(title='Degree Distribution', x=0, y='N', ax=axs[0], xlabel=None)
+            axs[1].grid(True, which="both", linestyle='--', alpha=0.5)
+            axs[1].tick_params(axis='both', which='major', labelsize=10)
+            axs[1].tick_params(axis='both', which='minor', labelsize=8)
 
 
-        degree_frequencies.plot(
-            title='Degree Distribution (log-log scale)'
-            ,ax=axs[1]
-            ,loglog=True
-            ,markersize=6
-            ,markeredgecolor='steelblue'
-            ,x=0
-            ,y=['N', 'N_Cumulative', 'Expected']
-            ,label=['Data', 'Cumulative', 'Power Law Cumulative']
-            ,style=['bo', 'c.', 'r--']
+            # Normal scale
+            degree_frequencies.plot(title='Degree Distribution', x=0, y='N', ax=axs[0], xlabel=None)
+
+
+            degree_frequencies.plot(
+                title='Degree Distribution (log-log scale)'
+                ,ax=axs[1]
+                ,loglog=True
+                ,markersize=6
+                ,markeredgecolor='steelblue'
+                ,x=0
+                ,y=['N', 'N_Cumulative', 'Expected']
+                ,label=['Data', 'Cumulative', 'Power Law Cumulative']
+                ,style=['bo', 'c.', 'r--']
         )
 
         # Return Metrics
@@ -198,7 +203,7 @@ class EvaluateNetworks():
             self.avg_path_length = 0
             self._diameter = 0
 
-            for node, shortest_paths in tqdm.tqdm(nx.all_pairs_shortest_path_length(self.network), total=len(self.network.nodes)):
+            for node, shortest_paths in tqdm.tqdm(nx.all_pairs_shortest_path_length(self.network), desc='    Finding Paths', total=len(self.network.nodes)):
                 self.shortest_paths[node] = shortest_paths
                 for node2 in shortest_paths.keys():
                     self.avg_path_length += self.shortest_paths[node][node2]
@@ -252,7 +257,7 @@ class EvaluateNetworks():
         return {}
 
 
-    def degree_centrality(self, force_update=False, ax=None, **kwargs):
+    def degree_centrality(self, force_update=False, ax=None, prints=False, plots=False, **kwargs):
 
         if not hasattr(self, '_degree_centrality') or force_update:
             # degree centrality
@@ -260,38 +265,39 @@ class EvaluateNetworks():
             # degree centrality per node
             self.centrality = (sorted(self._degree_centrality.items(), key=lambda item: item[1], reverse=True))
 
+        if prints:
+            print("    These are the top 10 nodes with highest degree centrality:\n" + '\n'.join([f"{node} -> {centrality_value}" for node, centrality_value in self.centrality[:10]]))
+            print("    These are the 10 nodes with lowest degree centrality:\n" + '\n'.join([f"{node} -> {centrality_value}" for node, centrality_value in self.centrality[-10:]]))
 
-        print("These are the top 10 nodes with highest degree centrality:\n" + '\n'.join([f"{node} -> {centrality_value}" for node, centrality_value in self.centrality[:10]]))
-        print("These are the 10 nodes with lowest degree centrality:\n" + '\n'.join([f"{node} -> {centrality_value}" for node, centrality_value in self.centrality[-10:]]))
-
-
-        # plot histogram
-        if ax is None:
-            ax = self.figure.add_subplot()
-            
-        # plot histogram
-        ax.hist(self._degree_centrality.values(), bins=25)
-        ax.set_title("Degree Centrality Histogram ", fontdict={"size": 10}, loc="center")
-        ax.set_xlabel("Degree Centrality", fontdict={"size": 10})
-        ax.set_ylabel("Counts", fontdict={"size": 10})
+        if plots:
+            # plot histogram
+            if ax is None:
+                ax = self.figure.add_subplot()
+                
+            # plot histogram
+            ax.hist(self._degree_centrality.values(), bins=25)
+            ax.set_title("Degree Centrality Histogram ", fontdict={"size": 10}, loc="center")
+            ax.set_xlabel("Degree Centrality", fontdict={"size": 10})
+            ax.set_ylabel("Counts", fontdict={"size": 10})
         return {'Average Degree Centrality': np.mean(list(self._degree_centrality.values()))}
 
     
-    def clustering_coefficient(self, force_update=False, ax=None, **kwargs):
+    def clustering_coefficient(self, force_update=False, ax=None, plots=False, **kwargs):
         # If method has already been called, no need to calculate values again  (unless forceupdate is true)
         if not hasattr(self, '_clustering_coefficient') or force_update:
             # betweenness centrality
             self._clustering_coefficient = nx.clustering(self.network)
+        
+        if plots:
+            # plot histogram
+            if ax is None:
+                ax = self.figure.add_subplot()
 
-        # plot histogram
-        if ax is None:
-            ax = self.figure.add_subplot()
-
-        ax.hist(self._clustering_coefficient.values(), bins=25)
-        # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
-        ax.set_title("Clustering Coefficient Histogram ", fontdict={"size": 10}, loc="center")
-        ax.set_xlabel("Clustering Coefficient", fontdict={"size": 10})
-        ax.set_ylabel("Counts", fontdict={"size": 10})
+            ax.hist(self._clustering_coefficient.values(), bins=25)
+            # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
+            ax.set_title("Clustering Coefficient Histogram ", fontdict={"size": 10}, loc="center")
+            ax.set_xlabel("Clustering Coefficient", fontdict={"size": 10})
+            ax.set_ylabel("Counts", fontdict={"size": 10})
 
         return {'Average Clustering Coefficient': np.mean(list(self._clustering_coefficient.values()))}
 
@@ -328,9 +334,11 @@ class EvaluateNetworks():
         
 
 
-    def evaluate(self, **kwargs):
+    def evaluate(self, plots=False, **kwargs):
         evaluations = {}
+        start = time.process_time()
         for evaluation in self.evaluations:
-            print(f'self.{evaluation}(**kwargs)')
-            evaluations.update(eval(f'self.{evaluation}(**kwargs)'))
+            print(f'  <{time.process_time()-start:05.02f} sec> Executing: <{evaluation}>')
+            evaluations.update(eval(f'self.{evaluation}(plots={plots}, **kwargs)'))
+        plt.close(self.figure)
         return evaluations
