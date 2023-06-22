@@ -55,7 +55,7 @@ def _install_g_trie(directory='./src/gtrieScanner'):
         os.chdir(f'{"/".join(directory.split("/")[:-1])}/gtrieScanner_src_01')
         subprocess.run(['make'])
         os.chdir(prev_dir)
-        os.rename('gtrieScanner_src_01', directory.split("/")[-1])
+        os.rename(f'{"/".join(directory.split("/")[:-1])}/gtrieScanner_src_01', directory)
 
 
 
@@ -77,12 +77,12 @@ class EvaluateNetworks():
                 'clustering_coefficient',
                 'z_score',    # USE G-TRIES or whatever it is called, don't have it currently
                 'degree_centrality',
-                'betweeness_centrality',
+                'betweenness_centrality',
                 'shortest_path_distribution',
                 'communities_number',
                 'average_community_size'
             ]
-            ,gtrie_directory='./src'
+            ,gtrie_directory='./src/gtrie_scanner'
             ,**kwargs   # Kwargs for FIGURE object from matplotlib.pyplot.figure
         ):
         self.network = network
@@ -94,13 +94,13 @@ class EvaluateNetworks():
 
 
 
-    def betweeness_centrality(self, force_update=False, ax=None, prints=False, plots=False, **kwargs):
+    def betweenness_centrality(self, force_update=False, ax=None, prints=False, plots=False, betweenness_k=None, **kwargs):
         # If method has already been called, no need to calculate values again  (unless forceupdate is true)
-        if not hasattr(self, '_betweeness_centrality') or force_update:
+        if not hasattr(self, '_betweenness_centrality') or force_update:
             # betweenness centrality
-            self._betweeness_centrality = nx.centrality.betweenness_centrality(self.network)
+            self._betweenness_centrality = nx.centrality.betweenness_centrality(self.network, k=betweenness_k)
             # betweeness per node
-            self.betweeness = (sorted(self._betweeness_centrality.items(), key=lambda item: item[1], reverse=True))
+            self.betweeness = (sorted(self._betweenness_centrality.items(), key=lambda item: item[1], reverse=True))
 
         if prints:
             print("    These are the top 10 nodes with highest betweenness centrality:\n" + '\n'.join([f"{node} -> {centrality_value}" for node, centrality_value in self.betweeness[:10]]))
@@ -109,9 +109,9 @@ class EvaluateNetworks():
         if plots:
             # plot histogram
             if ax is None:
-                (fig, ax) = plt.subplot()
+                ax = plt.subplot()
 
-            ax.hist(self._betweeness_centrality .values(), bins=25)
+            ax.hist(self._betweenness_centrality .values(), bins=25)
             # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
             ax.set_title("betweenness Centrality Histogram ", fontdict={"size": 10}, loc="center")
             ax.set_xlabel("betweenness Centrality", fontdict={"size": 10})
@@ -119,7 +119,7 @@ class EvaluateNetworks():
 
             display(ax.get_figure())
 
-        return {'Betweeness Centrality': np.mean(list(self._betweeness_centrality.values()))}
+        return {'Betweeness Centrality': np.mean(list(self._betweenness_centrality.values()))}
     
     
     
@@ -149,7 +149,7 @@ class EvaluateNetworks():
         if plots:
             # Plot distributions
             if axs is None:
-                fig, axs = plt.subplots(nrows=1, ncols=2)
+                fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(14, 5))
 
             axs[1].grid(True, which="both", linestyle='--', alpha=0.5)
             axs[1].tick_params(axis='both', which='major', labelsize=10)
@@ -228,7 +228,7 @@ class EvaluateNetworks():
                 
         # Plot distributions
         if ax is None:
-            fig, ax = plt.subplot()
+            ax = plt.subplot()
 
         # Plot the frequency distribution (ignoring path lengths of 0) as a percentage
         ax.bar(np.arange(1, self._diameter + 1), height=freq_percent)
@@ -253,7 +253,7 @@ class EvaluateNetworks():
         if plots:
             # plot histogram
             if ax is None:
-                fig, ax = plt.subplot()
+                ax = plt.subplot()
                 
             # plot histogram
             ax.hist(self._degree_centrality.values(), bins=25)
@@ -275,7 +275,7 @@ class EvaluateNetworks():
         if plots:
             # plot histogram
             if ax is None:
-                fig, ax = plt.subplot()
+                ax = plt.subplot()
 
             ax.hist(self._clustering_coefficient.values(), bins=25)
             # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
@@ -300,6 +300,7 @@ class EvaluateNetworks():
             _write_network(self.network, '__NETWORK__.txt')
             gtrie_command = f'{self.gtrie_dir}/gtrieScanner -s {motif_size} -m esu -g ./__NETWORK__.txt -f simple -o gtrie_output.txt -raw'
 
+            print(gtrie_command)
             subprocess.run(
                 gtrie_command.split(' ')
                 ,stdout=subprocess.DEVNULL  # To not print anything in the console
