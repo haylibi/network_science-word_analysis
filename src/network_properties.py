@@ -244,6 +244,7 @@ class EvaluateNetworks():
         ax.set_ylabel("Frequency (%)", fontdict={"size": 10})
 
         display(fig)
+        plt.close(fig)
         return {}
 
 
