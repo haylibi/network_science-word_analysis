@@ -19,7 +19,12 @@ import os
 
 from io import BytesIO # Used to temporarily store the ZIP downloaded file
 
+
 from IPython.display import display
+
+# Remove display after code execution for matplotlib
+plt.ioff()
+
 
 ################################################################################################
 # 
@@ -109,7 +114,7 @@ class EvaluateNetworks():
         if plots:
             # plot histogram
             if ax is None:
-                ax = plt.subplot()
+                fig, ax = plt.subplots(1, 1)
 
             ax.hist(self._betweenness_centrality .values(), bins=25)
             # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
@@ -118,6 +123,7 @@ class EvaluateNetworks():
             ax.set_ylabel("Counts", fontdict={"size": 10})
 
             display(ax.get_figure())
+            plt.close(ax.get_figure())
 
         return {'Betweeness Centrality': np.mean(list(self._betweenness_centrality.values()))}
     
@@ -173,6 +179,7 @@ class EvaluateNetworks():
         )
 
             display(axs[0].get_figure())
+            plt.close(axs[0].get_figure())
 
         # Return Metrics
         return {'PowerLaw Exponent': params[0]-1, 'Average Degree': self.avg_degree}
@@ -228,13 +235,15 @@ class EvaluateNetworks():
                 
         # Plot distributions
         if ax is None:
-            ax = plt.subplot()
+            fig, ax = plt.subplots(1, 1)
 
         # Plot the frequency distribution (ignoring path lengths of 0) as a percentage
         ax.bar(np.arange(1, self._diameter + 1), height=freq_percent)
         ax.set_title("Distribution of shortest path length on a random network", fontdict={"size": 10}, loc="center")
         ax.set_xlabel("Shortest Path Length", fontdict={"size": 10})
         ax.set_ylabel("Frequency (%)", fontdict={"size": 10})
+
+        display(fig)
         return {}
 
 
@@ -253,7 +262,7 @@ class EvaluateNetworks():
         if plots:
             # plot histogram
             if ax is None:
-                ax = plt.subplot()
+                fig, ax = plt.subplots(1, 1)
                 
             # plot histogram
             ax.hist(self._degree_centrality.values(), bins=25)
@@ -262,6 +271,7 @@ class EvaluateNetworks():
             ax.set_ylabel("Counts", fontdict={"size": 10})
             
             display(ax.get_figure())
+            plt.close(ax.get_figure())
 
         return {'Average Degree Centrality': np.mean(list(self._degree_centrality.values()))}
 
@@ -275,7 +285,7 @@ class EvaluateNetworks():
         if plots:
             # plot histogram
             if ax is None:
-                ax = plt.subplot()
+                fig, ax = plt.subplots(1, 1)
 
             ax.hist(self._clustering_coefficient.values(), bins=25)
             # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
@@ -284,6 +294,7 @@ class EvaluateNetworks():
             ax.set_ylabel("Counts", fontdict={"size": 10})
             
             display(ax.get_figure())
+            plt.close(ax.get_figure())
 
         return {'Average Clustering Coefficient': np.mean(list(self._clustering_coefficient.values()))}
 
@@ -336,6 +347,6 @@ class EvaluateNetworks():
         evaluations = {}
         start = time.process_time()
         for evaluation in self.evaluations:
-            print(f'  <{time.process_time()-start:05.02f} sec> Executing: <{evaluation}>')
+            print(f'  <{time.process_time()-start:05.02f} sec> Calculating: <{evaluation}>')
             evaluations.update(eval(f'self.{evaluation}(plots={plots}, **kwargs)'))
         return evaluations
