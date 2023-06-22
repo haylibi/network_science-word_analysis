@@ -19,8 +19,7 @@ import os
 
 from io import BytesIO # Used to temporarily store the ZIP downloaded file
 
-
-
+from IPython.display import display
 
 ################################################################################################
 # 
@@ -118,6 +117,8 @@ class EvaluateNetworks():
             ax.set_xlabel("betweenness Centrality", fontdict={"size": 10})
             ax.set_ylabel("Counts", fontdict={"size": 10})
 
+            display(ax.get_figure())
+
         return {'Betweeness Centrality': np.mean(list(self._betweeness_centrality.values()))}
     
     
@@ -170,6 +171,8 @@ class EvaluateNetworks():
                 ,label=['Data', 'Cumulative', 'Power Law Cumulative']
                 ,style=['bo', 'c.', 'r--']
         )
+
+            display(axs[0].get_figure())
 
         # Return Metrics
         return {'PowerLaw Exponent': params[0]-1, 'Average Degree': self.avg_degree}
@@ -257,6 +260,9 @@ class EvaluateNetworks():
             ax.set_title("Degree Centrality Histogram ", fontdict={"size": 10}, loc="center")
             ax.set_xlabel("Degree Centrality", fontdict={"size": 10})
             ax.set_ylabel("Counts", fontdict={"size": 10})
+            
+            display(ax.get_figure())
+
         return {'Average Degree Centrality': np.mean(list(self._degree_centrality.values()))}
 
     
@@ -276,6 +282,8 @@ class EvaluateNetworks():
             ax.set_title("Clustering Coefficient Histogram ", fontdict={"size": 10}, loc="center")
             ax.set_xlabel("Clustering Coefficient", fontdict={"size": 10})
             ax.set_ylabel("Counts", fontdict={"size": 10})
+            
+            display(ax.get_figure())
 
         return {'Average Clustering Coefficient': np.mean(list(self._clustering_coefficient.values()))}
 
