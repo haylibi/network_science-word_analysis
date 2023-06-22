@@ -87,31 +87,7 @@ class EvaluateNetworks():
             ,**kwargs   # Kwargs for FIGURE object from matplotlib.pyplot.figure
         ):
         self.network = network
-        self.figure = plt.figure(**kwargs)
-
-        # Don't turn figure visible until everything has been plotted
-        self.figure.set_visible(False)
-
-        # Defining axes
-        # Number of rows -> evaluations dividided by number of cols (ceiling, because if not disible one more row is needed)
-        nrows = math.ceil(len(evaluations)/ncols)
-        gs = gridspec.GridSpec(nrows=nrows, ncols=ncols, figure=plt.figure(figsize=(14, 10)))
-
-        # If number of evaluations is divisilbe by number of columns, generate axes needed (very direct, we have a rectangle rows X cols)
-        if len(evaluations)%ncols == 0:
-            axs = [plt.subplot(gs[i, j]) for i in range(nrows) for j in range(ncols)]
-        # Otherwise, last row will be different
-        else:
-            # Axis until last row always have number of cols, so creating those
-            axs = [plt.subplot(gs[i, j]) for i in range(nrows-1) for j in range(ncols)]
-            
-            # Last row, it will have a different number of columns depending on wether evaluations is divisible by NCols or not
-            # Last axis will fill screen if not divisible 
-            for j in range(len(evaluations)%ncols-1):
-                axs.append(plt.subplot(gs[nrows-1, j]))
-            axs.append(gs[nrows-1, j+1:])
-
-        self.axs = axs
+ 
         self.evaluations = evaluations
 
         # Install G_TrieScanner
@@ -134,7 +110,7 @@ class EvaluateNetworks():
         if plots:
             # plot histogram
             if ax is None:
-                ax = self.figure.add_subplot()
+                (fig, ax) = plt.subplot()
 
             ax.hist(self._betweeness_centrality .values(), bins=25)
             # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
@@ -172,7 +148,7 @@ class EvaluateNetworks():
         if plots:
             # Plot distributions
             if axs is None:
-                axs = [self.figure.add_subplot(1, 2, 1), self.figure.add_subplot(1, 2, 2)]
+                fig, axs = plt.subplots(nrows=1, ncols=2)
 
             axs[1].grid(True, which="both", linestyle='--', alpha=0.5)
             axs[1].tick_params(axis='both', which='major', labelsize=10)
@@ -249,7 +225,7 @@ class EvaluateNetworks():
                 
         # Plot distributions
         if ax is None:
-            ax = self.figure.add_subplot()
+            fig, ax = plt.subplot()
 
         # Plot the frequency distribution (ignoring path lengths of 0) as a percentage
         ax.bar(np.arange(1, self._diameter + 1), height=freq_percent)
@@ -274,7 +250,7 @@ class EvaluateNetworks():
         if plots:
             # plot histogram
             if ax is None:
-                ax = self.figure.add_subplot()
+                fig, ax = plt.subplot()
                 
             # plot histogram
             ax.hist(self._degree_centrality.values(), bins=25)
@@ -293,7 +269,7 @@ class EvaluateNetworks():
         if plots:
             # plot histogram
             if ax is None:
-                ax = self.figure.add_subplot()
+                fig, ax = plt.subplot()
 
             ax.hist(self._clustering_coefficient.values(), bins=25)
             # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
@@ -353,5 +329,4 @@ class EvaluateNetworks():
         for evaluation in self.evaluations:
             print(f'  <{time.process_time()-start:05.02f} sec> Executing: <{evaluation}>')
             evaluations.update(eval(f'self.{evaluation}(plots={plots}, **kwargs)'))
-        plt.close(self.figure)
         return evaluations
