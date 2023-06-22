@@ -80,6 +80,8 @@ class EvaluateNetworks():
                 'degree_centrality',
                 'betweeness_centrality',
                 'shortest_path_distribution',
+                'communities_number',
+                'average_community_size'
             ]
             ,gtrie_directory='./src'
             ,**kwargs   # Kwargs for FIGURE object from matplotlib.pyplot.figure
@@ -330,9 +332,20 @@ class EvaluateNetworks():
                 shutil.rmtree(os.path.abspath(self.gtrie_dir))
 
         return {f'Most Relevant Subgraph (size={motif_size})': f"'{self.z_scores.iloc[0]['adjmatrix']}' with a Z-Score of {self.z_scores.iloc[0][' z_score']}"}
+    
+    def communities_number(self, force_update=False, **kwargs):
+        if not hasattr(self, '_communities_number') or force_update:
+            communities = nx.community.louvain_communities(self.network, seed=1234)
+            number_of_communities = len(communities)
+            self._communities_number = number_of_communities
+        return {'Number of Communities': self._communities_number}           
 
-        
-
+    def average_community_size(self, force_update=False, **kwargs):
+        if not hasattr(self, '_average_community_size') or force_update:
+            communities = nx.community.louvain_communities(self.network, seed=1234)
+            average_size = sum(len(community) for community in communities) / len(communities)
+            self._average_community_size = average_size
+        return {'Average Community Size': self._average_community_size}
 
     def evaluate(self, plots=False, **kwargs):
         evaluations = {}
