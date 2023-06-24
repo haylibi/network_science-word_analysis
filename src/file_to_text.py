@@ -1,6 +1,8 @@
 import contractions
 import re
 from textblob import TextBlob
+import nltk
+nltk.download('punkt', quiet=True)
 
 def read_file(file_dir, encoding='utf-8', output='TextBlob'):
     # Fellowship Of The Ring for random network definition purposes:

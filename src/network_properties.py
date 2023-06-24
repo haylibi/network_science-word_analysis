@@ -1,5 +1,6 @@
 import math
 import time
+import random
 import numpy as np
 import pandas as pd
 import networkx as nx
@@ -20,7 +21,7 @@ import os
 from io import BytesIO # Used to temporarily store the ZIP downloaded file
 
 
-from IPython.display import display
+from IPython.display import display, HTML
 
 # Remove display after code execution for matplotlib
 plt.ioff()
@@ -37,13 +38,22 @@ def _write_network(network, txt_name):
         Writes network in a txt file where every line is a edge (Node1 Node2)
        
     '''
+    node_mapping = {}   # Converting every node into a number
+    edges = set()
     with open(txt_name, 'w') as f:
         for edge in network.edges:
-            f.write(f'{edge[0]} {edge[1]}\n')
+            if edge in edges: continue
+            edges.add(edge)
+            edges.add((edge[1], edge[0]))
+            node_mapping.setdefault(edge[0], len(node_mapping)+1)
+            node_mapping.setdefault(edge[1], len(node_mapping))
+            f.write(f'{node_mapping[edge[0]]} {node_mapping[edge[1]]}\n')
 
 def _install_g_trie(directory='./src/gtrieScanner'):
     # Installing gtrieScanner Tool if not already installed (it needs to be installed in a folder named "Ex7")
     if not os.path.isdir(directory):
+        print(directory)
+        print(os.getcwd())
         # URL to the GTrieScanner tool (zip file)
         gtrieScanner_url = 'https://www.dcc.fc.up.pt/~pribeiro/aulas/ns2223/homework/gtrieScanner_src_01.zip'
 
@@ -62,6 +72,25 @@ def _install_g_trie(directory='./src/gtrieScanner'):
         os.chdir(prev_dir)
         os.rename(f'{"/".join(directory.split("/")[:-1])}/gtrieScanner_src_01', directory)
 
+
+# Defining function which will create a image for a given adjacency matrix
+def save_graph_with_labels(adjacency_matrix, file_name=None, width='100px', padding_left='0', margin_left='0'):
+    if file_name is None:
+        file_name = adjacency_matrix
+    # If network already exists, jurt return HTML text
+    if f'{file_name}.png' in os.listdir('./data/imgs/'): 
+        return f'<img src="./data/imgs/{file_name}.png" style="width:{width}; padding-left:{padding_left}; margin-left:{margin_left}">'
+    num_rows = int(np.sqrt(len(adjacency_matrix)))
+    adj_matrix = np.array([[int(x) for x in adjacency_matrix[i*num_rows: (i+1)*num_rows]] for i in range(len(adjacency_matrix)//num_rows)])
+    rows, cols = np.where(adj_matrix == 1)
+    edges = zip(rows.tolist(), cols.tolist())
+    gr = nx.Graph()
+    gr.add_edges_from(edges)
+    nx.draw(gr, node_size=3000, with_labels=False, width=1, node_color='#000000')
+    # Save fig to be loaded by HTML afterwards
+    plt.savefig(f'./data/imgs/{file_name}.png', format='png')
+    plt.clf()
+    return f'<img src="./data/imgs/{file_name}.png" style="width:{width}; padding-left:{padding_left}">'
 
 
 ################################################################################################
@@ -87,7 +116,7 @@ class EvaluateNetworks():
                 'communities_number',
                 'average_community_size'
             ]
-            ,gtrie_directory='./src/gtrie_scanner'
+            ,gtrie_directory='./src/gtrieScanner'
             ,**kwargs   # Kwargs for FIGURE object from matplotlib.pyplot.figure
         ):
         self.network = network
@@ -96,6 +125,9 @@ class EvaluateNetworks():
 
         # Install G_TrieScanner
         self.gtrie_dir = gtrie_directory
+
+        # Initiate Motif_size to learn if motif already has been executed
+        self.motif_size = -1
 
 
 
@@ -302,33 +334,52 @@ class EvaluateNetworks():
 
 
 
-    def z_score(self, motif_size=4, force_update=False, remove_gtrie_dir=False, **kwargs):
+    def z_score(self, motif_size=4, force_update=False, remove_gtrie_dir=False, z_score_k=None, debug=False, **kwargs):
         # If method has already been called, no need to calculate values again  (unless forceupdate is true)
-        if not hasattr(self, 'z_scores') or force_update:
-
+        if self.motif_size!=motif_size or force_update:
+            self.motif_size = motif_size
             # Install G_Trie
             _install_g_trie(directory=self.gtrie_dir)
 
-            _write_network(self.network, '__NETWORK__.txt')
+            # If there is a Sampling number, pick those number of edges
+            if z_score_k is not None: 
+                random_edges = random.sample(list(self.network.edges), z_score_k)
+                G = nx.Graph()
+                G.add_edges_from(random_edges)
+                _write_network(G, '__NETWORK__.txt')
+
+            else: _write_network(self.network, '__NETWORK__.txt')
             gtrie_command = f'{self.gtrie_dir}/gtrieScanner -s {motif_size} -m esu -g ./__NETWORK__.txt -f simple -o gtrie_output.txt -raw'
 
-            print(gtrie_command)
+            if debug: print(gtrie_command)
             subprocess.run(
                 gtrie_command.split(' ')
                 ,stdout=subprocess.DEVNULL  # To not print anything in the console
                 ,stderr=subprocess.DEVNULL  # To not print anything in the console
             )
-            self.z_scores = pd.read_csv('raw.csv', sep=',').sort_values(by=' z_score', ascending=False)
+            self.z_scores = pd.read_csv(
+                'raw.txt'
+                ,sep=','
+                ,dtype={
+                    'adjmatrix': 'str'
+                    ,' occ_original': 'int'
+                    ,' z_score': 'float'
+                    ,' avg_random': 'float'
+                    ,' stdev_random': 'float'
+                }
+            ).sort_values(by=' z_score', ascending=False)
+            self.z_scores['motif'] = self.z_scores['adjmatrix'].apply(save_graph_with_labels)
 
             # Deleting files/directories created
             os.remove('__NETWORK__.txt')
             os.remove('gtrie_output.txt')
+            os.remove('raw.txt')
 
             if remove_gtrie_dir:
                 # removing directory
                 shutil.rmtree(os.path.abspath(self.gtrie_dir))
 
-        return {f'Most Relevant Subgraph (size={motif_size})': f"'{self.z_scores.iloc[0]['adjmatrix']}' with a Z-Score of {self.z_scores.iloc[0][' z_score']}"}
+        return {f'Most Relevant Subgraph (size={motif_size})': f"{self.z_scores.iloc[0]['motif']} with a Z-Score of {self.z_scores.iloc[0][' z_score']}"}
     
     def communities_number(self, force_update=False, **kwargs):
         if not hasattr(self, '_communities_number') or force_update:
@@ -344,10 +395,22 @@ class EvaluateNetworks():
             self._average_community_size = average_size
         return {'Average Community Size': self._average_community_size}
 
-    def evaluate(self, plots=False, **kwargs):
+
+    def motif_frequency(self, motif_size=4, **kwargs):
+        if self.motif_size != motif_size:
+            self.z_score(motif_size=motif_size, **kwargs)
+
+        df = self.z_scores[['motif', ' occ_original']].copy().rename(columns={' occ_original': 'frequency'})
+        display(HTML(df.to_html(index=False).replace('&lt;', '<').replace('&gt;', '>')))
+
+        return {}
+        
+
+
+    def evaluate(self, plots=False, print_evals=True, **kwargs):
         evaluations = {}
         start = time.process_time()
         for evaluation in self.evaluations:
-            print(f'  <{time.process_time()-start:05.02f} sec> Calculating: <{evaluation}>')
+            if print_evals: print(f'  <{time.process_time()-start:05.02f} sec> Calculating: <{evaluation}>')
             evaluations.update(eval(f'self.{evaluation}(plots={plots}, **kwargs)'))
         return evaluations
