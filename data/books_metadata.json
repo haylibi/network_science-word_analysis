@@ -13,11 +13,15 @@
         "Language": "English"
     },
     "Ode Triunfal": {
-        "Author": "Fernando Pessoa",
+        "Author": "Fernando Pessoa - Álvaro de Campos ",
         "Language": "Portuguese"
     },
     "Memorial do Convento": {
         "Author": "Jose Saramago",
+        "Language": "Portuguese"
+    },
+    "Tabacaria": {
+        "Author": "Fernando Pessoa - Álvaro de Campos ",
         "Language": "Portuguese"
     }
 }
