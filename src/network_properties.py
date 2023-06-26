@@ -256,7 +256,7 @@ class EvaluateNetworks():
 
         # We know the diameter, so create an array
         # to store values from 0 up to (and including) diameter
-        path_lengths = np.zeros(self._diameter + 1, dtype=int)
+        path_lengths = np.zeros(self._diameter + 1, dtype='int64')
 
         # Extract the frequency of shortest path lengths between two nodes
         for pls in self.shortest_paths.values():
