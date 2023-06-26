@@ -411,6 +411,9 @@ class EvaluateNetworks():
         evaluations = {}
         start = time.process_time()
         for evaluation in self.evaluations:
-            if print_evals: print(f'  <{time.process_time()-start:05.02f} sec> Calculating: <{evaluation}>')
-            evaluations.update(eval(f'self.{evaluation}(plots={plots}, **kwargs)'))
+            try:
+                if print_evals: print(f'  <{time.process_time()-start:05.02f} sec> Calculating: <{evaluation}>')
+                evaluations.update(eval(f'self.{evaluation}(plots={plots}, **kwargs)'))
+            except Exception as e:
+                print(f'  <{time.process_time()-start:05.02f} sec> Error evaluatinog <{evaluation}>. Message: {str(e)}')
         return evaluations
