@@ -220,16 +220,16 @@ class EvaluateNetworks():
     def get_shortest_paths(self, force_update=False, **kwargs):
         if not hasattr(self, 'shortest_paths') or force_update:
             self.shortest_paths = dict()
-            self.avg_path_length = 0
+            self._avg_path_length = 0
             self._diameter = 0
 
             for node, shortest_paths in tqdm.tqdm(nx.all_pairs_shortest_path_length(self.network), desc='    Finding Paths', total=len(self.network.nodes)):
                 self.shortest_paths[node] = shortest_paths
                 for node2 in shortest_paths.keys():
-                    self.avg_path_length += self.shortest_paths[node][node2]
+                    self._avg_path_length += self.shortest_paths[node][node2]
                     self._diameter = max(self._diameter, self.shortest_paths[node][node2])
             
-            self.avg_path_length = self.avg_path_length/(len(self.shortest_paths)**2)
+            self._avg_path_length = self._avg_path_length/(len(self.shortest_paths)**2)
 
         return self.shortest_paths
 
@@ -238,7 +238,7 @@ class EvaluateNetworks():
         if not hasattr(self, 'shortest_paths') or force_update:
             self.get_shortest_paths(force_update=force_update)
 
-        return {'Average Path Length': self.avg_path_length}
+        return {'Average Path Length': self._avg_path_length}
         
 
     def diameter(self, force_update=False, **kwargs):
