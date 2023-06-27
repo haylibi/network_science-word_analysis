@@ -171,6 +171,9 @@ class EvaluateNetworks():
             degree_frequencies['N'] = 0
             degree_frequencies = degree_frequencies.groupby(by=[0]).count().sort_values(by=[0], ascending=True).reset_index()
             
+            # If there is not enough data to create a regression, return empty
+            if degree_frequencies.shape[0] < 3: return {'PowerLaw Exponent': 'NA', 'Average Degree': self.avg_degree}
+            
             # Calculate power law estimated
             degree_frequencies['N_Cumulative'] = degree_frequencies['N'][::-1].cumsum()
             
@@ -217,13 +220,15 @@ class EvaluateNetworks():
         return {'PowerLaw Exponent': params[0]-1, 'Average Degree': self.avg_degree}
 
 
-    def get_shortest_paths(self, force_update=False, **kwargs):
+    def get_shortest_paths(self, force_update=False, print_tqdm=True, **kwargs):
         if not hasattr(self, 'shortest_paths') or force_update:
             self.shortest_paths = dict()
             self._avg_path_length = 0
             self._diameter = 0
 
-            for node, shortest_paths in tqdm.tqdm(nx.all_pairs_shortest_path_length(self.network), desc='    Finding Paths', total=len(self.network.nodes)):
+            _iter = nx.all_pairs_shortest_path_length(self.network)
+            if print_tqdm: _iter = tqdm.tqdm(_iter, desc='    Finding Paths', total=len(self.network.nodes))
+            for node, shortest_paths in _iter:
                 self.shortest_paths[node] = shortest_paths
                 for node2 in shortest_paths.keys():
                     self._avg_path_length += self.shortest_paths[node][node2]
@@ -236,7 +241,7 @@ class EvaluateNetworks():
 
     def avg_path_length(self, force_update=False, **kwargs):
         if not hasattr(self, 'shortest_paths') or force_update:
-            self.get_shortest_paths(force_update=force_update)
+            self.get_shortest_paths(force_update=force_update, **kwargs)
 
         return {'Average Path Length': self._avg_path_length}
         
@@ -244,12 +249,14 @@ class EvaluateNetworks():
     def diameter(self, force_update=False, **kwargs):
         # Diameter
         if not hasattr(self, '_diameter') or force_update:
-            self.get_shortest_paths(force_update=force_update)    
+            self.get_shortest_paths(force_update=force_update, **kwargs)    
         return {'Diameter': self._diameter}          
 
 
-    def shortest_path_distribution(self, force_update=False, ax=None, **kwargs):
+    def shortest_path_distribution(self, force_update=False, ax=None, plots=True, **kwargs):
 
+        if not plots: return {}
+        
         # If diameter already exists, we know the shortest path already exists as well
         if not hasattr(self, 'diameter') or force_update:
             self.avg_path_length(force_update=force_update)      
@@ -407,7 +414,7 @@ class EvaluateNetworks():
         
 
 
-    def evaluate(self, plots=False, print_evals=True, **kwargs):
+    def evaluate(self, plots=False, print_evals=True, warnings=True, **kwargs):
         evaluations = {}
         start = time.process_time()
         for evaluation in self.evaluations:
@@ -415,5 +422,5 @@ class EvaluateNetworks():
                 if print_evals: print(f'  <{time.process_time()-start:05.02f} sec> Calculating: <{evaluation}>')
                 evaluations.update(eval(f'self.{evaluation}(plots={plots}, **kwargs)'))
             except Exception as e:
-                print(f'  <{time.process_time()-start:05.02f} sec> Error evaluatinog <{evaluation}>. Message: {str(e)}')
+                if warnings: print(f'  <{time.process_time()-start:05.02f} sec> Error evaluatinog <{evaluation}>. Message: {str(e)}')
         return evaluations
