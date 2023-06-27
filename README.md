@@ -1,5 +1,14 @@
 # Network Science Project
 
+## Project 
+The main goals behind this project were to discover if, by analyzing a word adjacency network, we can:
+1. Find a model which would generate a network similar to the word adjacency network
+1. Identify which author wrote a specific text from it's word adjacency network
+1. Identify which language a certain text has been written in (limited to english and portuguese)
+
+## Conclusions
+Due to the small dataset used in this project, the results obtained do not have any statistical relevance, but can be used as a starting point.
+
 ## Data Sources
 
 ### Books
