@@ -9,6 +9,9 @@ The main goals behind this project were to discover if, by analyzing a word adja
 ## Conclusions
 Due to the small dataset used in this project, the results obtained do not have any statistical relevance, but can be used as a starting point.
 
+## Report 
+https://www.overleaf.com/4235279759csmsvqnrnvjc
+
 ## Data Sources
 
 ### Books
