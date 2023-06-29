@@ -1,0 +1,27 @@
+{
+    "The Fellowship Of The Ring": {
+        "Author": "J. R. R. Tolkien",
+        "Language": "English"
+    },
+    "Lusiadas": {
+        "Author": "Luis de Camoes",
+        "Language": "Portuguese"
+    },
+    "Lusiadas - English Translation": {
+        "Author": "Luis de Camoes",
+        "Translator": "William Julius Mickle",
+        "Language": "English"
+    },
+    "Ode Triunfal": {
+        "Author": "Fernando Pessoa - Álvaro de Campos ",
+        "Language": "Portuguese"
+    },
+    "Memorial do Convento": {
+        "Author": "Jose Saramago",
+        "Language": "Portuguese"
+    },
+    "Tabacaria": {
+        "Author": "Fernando Pessoa - Álvaro de Campos ",
+        "Language": "Portuguese"
+    }
+}
