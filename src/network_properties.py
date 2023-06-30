@@ -152,7 +152,7 @@ class EvaluateNetworks():
             if ax is None:
                 fig, ax = plt.subplots(1, 1)
 
-            ax.hist(self._betweenness_centrality .values(), bins=25)
+            ax.hist(self._betweenness_centrality .values(), bins=25, edgecolor='#d7d7d7')
             # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
             ax.set_title("betweenness Centrality Histogram ", fontdict={"size": 10}, loc="center")
             ax.set_xlabel("betweenness Centrality", fontdict={"size": 10})
@@ -202,10 +202,10 @@ class EvaluateNetworks():
 
 
             # Normal scale
-            degree_frequencies.plot(title='Degree Distribution', x=0, y='N', ax=axs[0], xlabel=None)
+            self.degree_frequencies.plot(title='Degree Distribution', x=0, y='N', ax=axs[0], xlabel=None)
 
 
-            degree_frequencies.plot(
+            self.degree_frequencies.plot(
                 title='Degree Distribution (log-log scale)'
                 ,ax=axs[1]
                 ,loglog=True
@@ -309,7 +309,7 @@ class EvaluateNetworks():
                 fig, ax = plt.subplots(1, 1)
                 
             # plot histogram
-            ax.hist(self._degree_centrality.values(), bins=25)
+            ax.hist(self._degree_centrality.values(), bins=25, edgecolor='#d7d7d7')
             ax.set_title("Degree Centrality Histogram ", fontdict={"size": 10}, loc="center")
             ax.set_xlabel("Degree Centrality", fontdict={"size": 10})
             ax.set_ylabel("Counts", fontdict={"size": 10})
@@ -331,7 +331,7 @@ class EvaluateNetworks():
             if ax is None:
                 fig, ax = plt.subplots(1, 1)
 
-            ax.hist(self._clustering_coefficient.values(), bins=25)
+            ax.hist(self._clustering_coefficient.values(), bins=25, edgecolor='#d7d7d7')
             # plt.xticks(ticks=[0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001])  # set the x axis ticks
             ax.set_title("Clustering Coefficient Histogram ", fontdict={"size": 10}, loc="center")
             ax.set_xlabel("Clustering Coefficient", fontdict={"size": 10})
